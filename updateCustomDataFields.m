@@ -106,23 +106,34 @@ else
 end
 TaskParameters.GUI.StimDelay = BpodSystem.Data.Custom.StimDelay(end);
 
-if TaskParameters.GUI.FeedbackDelayAutoincrement
-    if ~BpodSystem.Data.Custom.Feedback(end-1)
-        BpodSystem.Data.Custom.FeedbackDelay(end+1) = max(TaskParameters.GUI.FeedbackDelayMin,...
-            BpodSystem.Data.Custom.FeedbackDelay(end)-TaskParameters.GUI.FeedbackDelayDecr);
-    else
-        BpodSystem.Data.Custom.FeedbackDelay(end+1) = min(TaskParameters.GUI.FeedbackDelayMax,...
-            BpodSystem.Data.Custom.FeedbackDelay(end)+TaskParameters.GUI.FeedbackDelayIncr);
-    end
-    TaskParameters.GUI.FeedbackDelay = BpodSystem.Data.Custom.FeedbackDelay(end);
-else
-%     ATTEMPT TO GRAY OUT FIELDS
-%     if ~strcmp('edit',TaskParameters.GUIMeta.FeedbackDelay.Style)
-%         TaskParameters.GUIMeta.FeedbackDelay.Style = 'edit';
-%     end
-    BpodSystem.Data.Custom.FeedbackDelay(end+1) = TaskParameters.GUI.FeedbackDelayMax;
-    TaskParameters.GUI.FeedbackDelay = TaskParameters.GUI.FeedbackDelayMax;
+% if TaskParameters.GUI.FeedbackDelayAutoincrement
+switch TaskParameters.GUIMeta.FeedbackDelaySelection.String{TaskParameters.GUI.FeedbackDelaySelection}
+    case 'FixAuto'
+        
+        if ~BpodSystem.Data.Custom.Feedback(end-1)
+            BpodSystem.Data.Custom.FeedbackDelay(end+1) = max(TaskParameters.GUI.FeedbackDelayMin,...
+                BpodSystem.Data.Custom.FeedbackDelay(end)-TaskParameters.GUI.FeedbackDelayDecr);
+        else
+            BpodSystem.Data.Custom.FeedbackDelay(end+1) = min(TaskParameters.GUI.FeedbackDelayMax,...
+                BpodSystem.Data.Custom.FeedbackDelay(end)+TaskParameters.GUI.FeedbackDelayIncr);
+        end
+        
+        
+    case 'TruncExp'
+        
+        BpodSystem.Data.Custom.FeedbackDelay(end+1) = TruncatedExponential(TaskParameters.GUI.FeedbackDelayMin,...
+            TaskParameters.GUI.FeedbackDelayMax,TaskParameters.GUI.FeedbackDelayTau);
+        
+    case 'Fix'
+        %     ATTEMPT TO GRAY OUT FIELDS
+        %     if ~strcmp('edit',TaskParameters.GUIMeta.FeedbackDelay.Style)
+        %         TaskParameters.GUIMeta.FeedbackDelay.Style = 'edit';
+        %     end
+        BpodSystem.Data.Custom.FeedbackDelay(end+1) = TaskParameters.GUI.FeedbackDelayMax;
+        
 end
+TaskParameters.GUI.FeedbackDelay = BpodSystem.Data.Custom.FeedbackDelay(end);
+
 %% Block count
 % nTrialsThisBlock = sum(BpodSystem.Data.Custom.BlockNumber == BpodSystem.Data.Custom.BlockNumber(end));
 % if nTrialsThisBlock >= TaskParameters.GUI.blockLenMax

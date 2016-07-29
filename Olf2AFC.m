@@ -29,15 +29,17 @@ if isempty(fieldnames(TaskParameters))
     TaskParameters.GUIMeta.StimDelay.Style = 'text';
     TaskParameters.GUIPanels.StimDelay = {'StimDelayAutoincrement','StimDelayMin','StimDelayMax','StimDelayIncr','StimDelayDecr','StimDelay'};
     %% FeedbackDelay
-    TaskParameters.GUI.FeedbackDelayAutoincrement = 1;
-    TaskParameters.GUIMeta.FeedbackDelayAutoincrement.Style = 'checkbox';
+    TaskParameters.GUI.FeedbackDelaySelection = 2;
+    TaskParameters.GUIMeta.FeedbackDelaySelection.Style = 'popupmenu';
+    TaskParameters.GUIMeta.FeedbackDelaySelection.String = {'Fix','FixAuto','TruncExp'};
     TaskParameters.GUI.FeedbackDelayMin = 0;
     TaskParameters.GUI.FeedbackDelayMax = 1;
     TaskParameters.GUI.FeedbackDelayIncr = 0.01;
     TaskParameters.GUI.FeedbackDelayDecr = 0.01;
+    TaskParameters.GUI.FeedbackDelayTau = 0.05;
     TaskParameters.GUI.FeedbackDelay = TaskParameters.GUI.FeedbackDelayMin;
     TaskParameters.GUIMeta.FeedbackDelay.Style = 'text';
-    TaskParameters.GUIPanels.FeedbackDelay = {'FeedbackDelayAutoincrement','FeedbackDelayMin','FeedbackDelayMax','FeedbackDelayIncr','FeedbackDelayDecr','FeedbackDelay'};
+    TaskParameters.GUIPanels.FeedbackDelay = {'FeedbackDelaySelection','FeedbackDelayMin','FeedbackDelayMax','FeedbackDelayIncr','FeedbackDelayDecr','FeedbackDelayTau','FeedbackDelay'};
     %% OdorParams
     TaskParameters.GUI.OdorA_bank = 3;
     TaskParameters.GUI.OdorB_bank = 4;
@@ -83,10 +85,16 @@ if TaskParameters.GUI.StimDelayAutoincrement
 else
     BpodSystem.Data.Custom.StimDelay = random('unif',TaskParameters.GUI.StimDelayMin,TaskParameters.GUI.StimDelayMax);
 end
-if TaskParameters.GUI.FeedbackDelayAutoincrement
-    BpodSystem.Data.Custom.FeedbackDelay = TaskParameters.GUI.FeedbackDelayMin;
-else
-    BpodSystem.Data.Custom.FeedbackDelay = TaskParameters.GUI.FeedbackDelayMax;
+switch TaskParameters.GUIMeta.FeedbackDelaySelection.String{TaskParameters.GUI.FeedbackDelaySelection}
+    case 'FixAuto'      
+        BpodSystem.Data.Custom.FeedbackDelay = TaskParameters.GUI.FeedbackDelayMin;
+        
+    case 'TruncExp'
+        BpodSystem.Data.Custom.FeedbackDelay = TruncatedExponential(TaskParameters.GUI.FeedbackDelayMin,...
+            TaskParameters.GUI.FeedbackDelayMax,TaskParameters.GUI.FeedbackDelayTau);
+        
+    case 'Fix'
+        BpodSystem.Data.Custom.FeedbackDelay = TaskParameters.GUI.FeedbackDelayMax;
 end
 BpodSystem.Data.Custom.TrialNumber = 1;
 BpodSystem.Data.Custom.Feedback = true;
