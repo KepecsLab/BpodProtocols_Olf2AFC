@@ -4,34 +4,43 @@ global TaskParameters
 %% OutcomeRecord
 % Searches for state names and not number, so won't be affected by
 % modifications in state matrix
-ndxOutcome = find(strcmp('rewarded_Lin',BpodSystem.Data.RawData.OriginalStateNamesByNumber{end}) |...
-    strcmp('rewarded_Rin',BpodSystem.Data.RawData.OriginalStateNamesByNumber{end}) |...
-    strcmp('unrewarded_Lin',BpodSystem.Data.RawData.OriginalStateNamesByNumber{end}) |...
-    strcmp('unrewarded_Rin',BpodSystem.Data.RawData.OriginalStateNamesByNumber{end}) |...
-    strcmp('broke_fixation',BpodSystem.Data.RawData.OriginalStateNamesByNumber{end})); % States of interest
-if any(ismember(ndxOutcome,BpodSystem.Data.RawData.OriginalStateData{end}))
-    BpodSystem.Data.Custom.OutcomeRecord(end) = ndxOutcome(ismember(ndxOutcome,BpodSystem.Data.RawData.OriginalStateData{end}));
-    if strcmp('rewarded_Lin',BpodSystem.Data.RawData.OriginalStateNamesByNumber{end}(BpodSystem.Data.Custom.OutcomeRecord(end)))
-        BpodSystem.Data.Custom.ChoiceLeft(end) = 1;
-        BpodSystem.Data.Custom.ChoiceCorrect(end) = 1;
-    elseif strcmp('rewarded_Rin',BpodSystem.Data.RawData.OriginalStateNamesByNumber{end}(BpodSystem.Data.Custom.OutcomeRecord(end)))
-        BpodSystem.Data.Custom.ChoiceLeft(end) = 0;
-        BpodSystem.Data.Custom.ChoiceCorrect(end) = 1;
-    elseif strcmp('unrewarded_Lin',BpodSystem.Data.RawData.OriginalStateNamesByNumber{end}(BpodSystem.Data.Custom.OutcomeRecord(end)))
-        BpodSystem.Data.Custom.ChoiceLeft(end) = 1;
-        BpodSystem.Data.Custom.ChoiceCorrect(end) = 0;
-    elseif strcmp('unrewarded_Rin',BpodSystem.Data.RawData.OriginalStateNamesByNumber{end}(BpodSystem.Data.Custom.OutcomeRecord(end)))
-        BpodSystem.Data.Custom.ChoiceLeft(end) = 0;
-        BpodSystem.Data.Custom.ChoiceCorrect(end) = 0;
-    elseif strcmp('broke_fixation',BpodSystem.Data.RawData.OriginalStateNamesByNumber{end}(BpodSystem.Data.Custom.OutcomeRecord(end)))
-        BpodSystem.Data.Custom.FixBroke(end) = true;
-        BpodSystem.Data.Custom.TrialValid(end) = false;
-    end
-    if any(strcmp('skipped_feedback',BpodSystem.Data.RawData.OriginalStateNamesByNumber{end}(BpodSystem.Data.RawData.OriginalStateData{end})))
-        BpodSystem.Data.Custom.TrialValid(end) = false;
-        BpodSystem.Data.Custom.Feedback(end) = false;        
-    end
+stateOfInt = {'rewarded_Lin','rewarded_Rin','unrewarded_Lin','unrewarded_Rin','broke_fixation','skipped_feedback','missed_choice'};
+ndxOutcome = false(size(BpodSystem.Data.RawData.OriginalStateNamesByNumber{end}));
+for iSOI = 1:numel(stateOfInt)
+    ndxOutcome = or(ndxOutcome,strcmp(stateOfInt{iSOI},BpodSystem.Data.RawData.OriginalStateNamesByNumber{end}));
 end
+ndxOutcome = find(ndxOutcome);
+outcomeRecord = ndxOutcome(ismember(ndxOutcome,BpodSystem.Data.RawData.OriginalStateData{end}));
+if numel(outcomeRecord) == 0
+    error('Bpod:Olf2AFC:unknownOutcome','Unknown trial outcome.\nSee discussion of <a href="https://github.com/KepecsLab/BpodProtocols_Olf2AFC/issues/12">issue #12 on github</a>.')
+elseif numel(outcomeRecord) > 1
+    error('Bpod:Olf2AFC:underdetOutcome','Underdetermined trial outcome.\nSee discussion of <a href="https://github.com/KepecsLab/BpodProtocols_Olf2AFC/issues/12">issue #12 on github</a>.')
+end
+BpodSystem.Data.Custom.OutcomeRecord(end) = outcomeRecord;
+if strcmp('rewarded_Lin',BpodSystem.Data.RawData.OriginalStateNamesByNumber{end}(BpodSystem.Data.Custom.OutcomeRecord(end)))
+    BpodSystem.Data.Custom.ChoiceLeft(end) = 1;
+    BpodSystem.Data.Custom.ChoiceCorrect(end) = 1;
+elseif strcmp('rewarded_Rin',BpodSystem.Data.RawData.OriginalStateNamesByNumber{end}(BpodSystem.Data.Custom.OutcomeRecord(end)))
+    BpodSystem.Data.Custom.ChoiceLeft(end) = 0;
+    BpodSystem.Data.Custom.ChoiceCorrect(end) = 1;
+elseif strcmp('unrewarded_Lin',BpodSystem.Data.RawData.OriginalStateNamesByNumber{end}(BpodSystem.Data.Custom.OutcomeRecord(end)))
+    BpodSystem.Data.Custom.ChoiceLeft(end) = 1;
+    BpodSystem.Data.Custom.ChoiceCorrect(end) = 0;
+elseif strcmp('unrewarded_Rin',BpodSystem.Data.RawData.OriginalStateNamesByNumber{end}(BpodSystem.Data.Custom.OutcomeRecord(end)))
+    BpodSystem.Data.Custom.ChoiceLeft(end) = 0;
+    BpodSystem.Data.Custom.ChoiceCorrect(end) = 0;
+elseif strcmp('broke_fixation',BpodSystem.Data.RawData.OriginalStateNamesByNumber{end}(BpodSystem.Data.Custom.OutcomeRecord(end)))
+    BpodSystem.Data.Custom.FixBroke(end) = true;
+    BpodSystem.Data.Custom.TrialValid(end) = false;
+elseif strcmp('skipped_feedback',BpodSystem.Data.RawData.OriginalStateNamesByNumber{end}(BpodSystem.Data.Custom.OutcomeRecord(end))) || ...
+        strcmp('missed_choice',BpodSystem.Data.RawData.OriginalStateNamesByNumber{end}(BpodSystem.Data.Custom.OutcomeRecord(end)))
+    BpodSystem.Data.Custom.TrialValid(end) = false;
+    BpodSystem.Data.Custom.Feedback(end) = false;
+else
+    warning('on','Bpod:Olf2AFC:unusedOutcome')
+    warning('Bpod:Olf2AFC:unusedOutcome','Fields in BpodSystem.Data.Custom were not modified after outcome handling, and might not reflect trial outcome. \nYou might find discussion of <a href="https://github.com/KepecsLab/BpodProtocols_Olf2AFC/issues/12">issue #12 on github</a> relevant.')
+end
+
 if any(strncmp('water_',BpodSystem.Data.RawData.OriginalStateNamesByNumber{end}(BpodSystem.Data.RawData.OriginalStateData{end}),6))
     BpodSystem.Data.Custom.Rewarded(end) = true;
 end
