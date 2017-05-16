@@ -13,7 +13,8 @@ if softCode < 11 %for olfactory
         
         if softCode < 9
             if ~BpodSystem.EmulatorMode
-                CommandValve = Valves2EthernetString(firstbank, softCode, secbank, softCode); % softCode := desired valve number
+                softCode = softCode-1; % Olfactometer valve number 1 to 8 are called with softCode number 0 to 7 
+                CommandValve = Valves2EthernetString(firstbank, softCode, secbank, softCode); % softCode := desired valve number - 1
                 TCPWrite(BpodSystem.Data.Custom.OlfIp, 3336, CommandValve);
             end
         elseif softCode == 9
