@@ -317,6 +317,8 @@ switch Action
             BpodSystem.GUIHandles.OutcomePlot.HistFix.BinWidth = 50;
             BpodSystem.GUIHandles.OutcomePlot.HistFix.FaceColor = 'b';
             BpodSystem.GUIHandles.OutcomePlot.HistFix.EdgeColor = 'none';
+            BreakP = mean(BpodSystem.Data.Custom.FixBroke);
+            cornertext(AxesHandles.HandleFix,sprintf('P=%1.2f',BreakP))
         end
         %% ST
         if TaskParameters.GUI.ShowST
@@ -329,6 +331,8 @@ switch Action
             BpodSystem.GUIHandles.OutcomePlot.HistST.BinWidth = 50;
             BpodSystem.GUIHandles.OutcomePlot.HistST.FaceColor = 'b';
             BpodSystem.GUIHandles.OutcomePlot.HistST.EdgeColor = 'none';
+            EarlyP = sum(BpodSystem.Data.Custom.EarlyWithdrawal)/sum(~BpodSystem.Data.Custom.FixBroke);
+            cornertext(AxesHandles.HandleST,sprintf('P=%1.2f',EarlyP))
         end
         %% Feedback delay (exclude catch trials and error trials, if set on catch)
         if TaskParameters.GUI.ShowFeedback
@@ -347,7 +351,10 @@ switch Action
             BpodSystem.GUIHandles.OutcomePlot.HistFeed.BinWidth = 50;
             BpodSystem.GUIHandles.OutcomePlot.HistFeed.EdgeColor = 'none';
             BpodSystem.GUIHandles.OutcomePlot.HistFeed.FaceColor = 'b';
-            %         BpodSystem.GUIHandles.OutcomePlot.HistFeed.Normalization = 'probability';
+            %BpodSystem.GUIHandles.OutcomePlot.HistFeed.Normalization = 'probability';
+            LeftSkip = sum(~BpodSystem.Data.Custom.Feedback(1:iTrial)&~BpodSystem.Data.Custom.CatchTrial(1:iTrial)&~ndxExclude&BpodSystem.Data.Custom.ChoiceLeft(1:iTrial)==1)/sum(~BpodSystem.Data.Custom.CatchTrial(1:iTrial)&~ndxExclude&BpodSystem.Data.Custom.ChoiceLeft(1:iTrial)==1);
+            RightSkip = sum(~BpodSystem.Data.Custom.Feedback(1:iTrial)&~BpodSystem.Data.Custom.CatchTrial(1:iTrial)&~ndxExclude&BpodSystem.Data.Custom.ChoiceLeft(1:iTrial)==0)/sum(~BpodSystem.Data.Custom.CatchTrial(1:iTrial)&~ndxExclude&BpodSystem.Data.Custom.ChoiceLeft(1:iTrial)==0);
+            cornertext(AxesHandles.HandleFeedback,{sprintf('L=%1.2f',LeftSkip),sprintf('R=%1.2f',RightSkip)})
         end
 end
 
@@ -360,4 +367,17 @@ mx = mn + nTrialsToShow - 1;
 set(AxesHandle,'XLim',[mn-1 mx+1]);
 end
 
+function cornertext(h,str)
+unit = get(h,'Units');
+set(h,'Units','char');
+pos = get(h,'Position');
+if ~iscell(str)
+    str = {str};
+end
+for i = 1:length(str)
+    x = pos(1)+1;y = pos(2)+pos(4)-i;
+    uicontrol(h.Parent,'Units','char','Position',[x,y,length(str{i}),1],'string',str{i},'style','text','background',[1,1,1],'FontSize',8);
+end
+set(h,'Units',unit);
+end
 
