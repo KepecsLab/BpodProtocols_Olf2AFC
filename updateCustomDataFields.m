@@ -305,6 +305,7 @@ if iTrial > numel(BpodSystem.Data.Custom.DV) - 5
             BpodSystem.Data.Custom.AuditoryOmega(lastidx+a) = NaN;
             BpodSystem.Data.Custom.LeftClickRate(lastidx+a) = NaN;
             BpodSystem.Data.Custom.RightClickRate(lastidx+a) = NaN;
+            BpodSystem.Data.Custom.MoreLeftClicks(lastidx+a) = NaN;
             BpodSystem.Data.Custom.LeftClickTrain{lastidx+a} = [];
             BpodSystem.Data.Custom.RightClickTrain{lastidx+a} = [];
         end%if auditory
