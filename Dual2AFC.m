@@ -13,7 +13,10 @@ if isempty(fieldnames(TaskParameters))
     TaskParameters.GUI.ITI = 1; 
     TaskParameters.GUI.PreITI = 0; 
     TaskParameters.GUI.CenterWaitMax = 20; 
-    TaskParameters.GUI.RewardAmount = 25;
+    TaskParameters.GUI.S_ra = 15;
+    TaskParameters.GUI.M_ra = 25;
+    TaskParameters.GUI.L_ra = 50;
+    
     TaskParameters.GUI.DrinkingTime = 5;
     TaskParameters.GUI.DrinkingGrace = 0.1;
     TaskParameters.GUI.ChoiceDeadLine = 3;
@@ -28,10 +31,14 @@ if isempty(fieldnames(TaskParameters))
     TaskParameters.GUI.CatchError = false;
     TaskParameters.GUIMeta.CatchError.Style = 'checkbox';
     TaskParameters.GUI.Ports_LMR = 123;
+    TaskParameters.GUI.bPort = 4;
     TaskParameters.GUI.MaxSessionTime = 180;
     TaskParameters.GUI.PortLEDs = true;
     TaskParameters.GUIMeta.PortLEDs.Style = 'checkbox';
-    TaskParameters.GUIPanels.General = {'MaxSessionTime','CenterWaitMax','ITI','PreITI','RewardAmount','DrinkingTime','DrinkingGrace','ChoiceDeadLine','TimeOutIncorrectChoice','TimeOutBrokeFixation','TimeOutEarlyWithdrawal','TimeOutSkippedFeedback','PercentAuditory','StartEasyTrials','Percent50Fifty','PercentCatch','CatchError','Ports_LMR','PortLEDs'};
+    TaskParameters.GUIPanels.General = {'MaxSessionTime','CenterWaitMax','ITI',...
+        'PreITI','S_ra','M_ra','L_ra','DrinkingTime','DrinkingGrace','ChoiceDeadLine','TimeOutIncorrectChoice',...
+        'TimeOutBrokeFixation','TimeOutEarlyWithdrawal','TimeOutSkippedFeedback','PercentAuditory','StartEasyTrials',...
+        'Percent50Fifty','PercentCatch','CatchError','Ports_LMR','bPort','PortLEDs'};
     %% BiasControl
     TaskParameters.GUI.TrialSelection = 3;
     TaskParameters.GUIMeta.TrialSelection.Style = 'popupmenu';
@@ -49,24 +56,43 @@ if isempty(fieldnames(TaskParameters))
     TaskParameters.GUIMeta.StimDelay.Style = 'text';
     TaskParameters.GUIPanels.StimDelay = {'StimDelayAutoincrement','StimDelayMin','StimDelayMax','StimDelayIncr','StimDelayDecr','StimDelay'};
     %% FeedbackDelay
+    
+    TaskParameters.GUI.FeedbackDelay1min = .25;
+    TaskParameters.GUI.FeedbackDelay1max = .5;
+    TaskParameters.GUI.FeedbackDelay1 = .25;
+    TaskParameters.GUIMeta.FeedbackDelay1.Style = 'text';
+    TaskParameters.GUI.FeedbackDelay2min = .25;
+    TaskParameters.GUI.FeedbackDelay2max = .75;
+    TaskParameters.GUI.FeedbackDelay2 = .5;
+    TaskParameters.GUIMeta.FeedbackDelay2.Style = 'text';
+    TaskParameters.GUI.FeedbackDelay3min = .5;
+    TaskParameters.GUI.FeedbackDelay3max = 1.5;
+    TaskParameters.GUI.FeedbackDelay3 = 1.0;
+    TaskParameters.GUIMeta.FeedbackDelay3.Style = 'text';
+    
     TaskParameters.GUI.FeedbackDelaySelection = 1;
     TaskParameters.GUIMeta.FeedbackDelaySelection.Style = 'popupmenu';
     TaskParameters.GUIMeta.FeedbackDelaySelection.String = {'Fix','AutoIncr','TruncExp'};
-    TaskParameters.GUI.FeedbackDelayMin = 0;
-    TaskParameters.GUI.FeedbackDelayMax = 0;
-    TaskParameters.GUI.FeedbackDelayIncr = 0.01;
-    TaskParameters.GUI.FeedbackDelayDecr = 0.01;
-    TaskParameters.GUI.FeedbackDelayTau = 0.05;
-    TaskParameters.GUI.FeedbackDelayGrace = 0;
+    TaskParameters.GUI.FeedbackDelayIncr=0.05;
+    TaskParameters.GUI.FeedbackDelayDecr=0.01;
+    TaskParameters.GUI.FeedbackDelayTau1 = 0.3;
+    TaskParameters.GUI.FeedbackDelayTau2 = 0.5;
+    TaskParameters.GUI.FeedbackDelayTau3 = 0.8;
+    TaskParameters.GUI.FeedbackDelayGrace=0.2;
+    
+
     TaskParameters.GUI.IncorrectChoiceFeedbackType = 2;
     TaskParameters.GUIMeta.IncorrectChoiceFeedbackType.Style = 'popupmenu';
     TaskParameters.GUIMeta.IncorrectChoiceFeedbackType.String = {'None','Tone','PortLED'};
     TaskParameters.GUI.SkippedFeedbackFeedbackType = 2;
     TaskParameters.GUIMeta.SkippedFeedbackFeedbackType.Style = 'popupmenu';
     TaskParameters.GUIMeta.SkippedFeedbackFeedbackType.String = {'None','Tone','PortLED'};
-    TaskParameters.GUI.FeedbackDelay = TaskParameters.GUI.FeedbackDelayMin;
+
     TaskParameters.GUIMeta.FeedbackDelay.Style = 'text';
-    TaskParameters.GUIPanels.FeedbackDelay = {'FeedbackDelaySelection','FeedbackDelayMin','FeedbackDelayMax','FeedbackDelayIncr','FeedbackDelayDecr','FeedbackDelayTau','FeedbackDelayGrace','FeedbackDelay','IncorrectChoiceFeedbackType','SkippedFeedbackFeedbackType'};
+    TaskParameters.GUIPanels.FeedbackDelay = {'FeedbackDelay1min','FeedbackDelay1max','FeedbackDelay1','FeedbackDelay2min','FeedbackDelay2max','FeedbackDelay2',...
+        'FeedbackDelay3min','FeedbackDelay3max','FeedbackDelay3',...
+        'FeedbackDelaySelection','FeedbackDelayIncr','FeedbackDelayDecr',...
+        'FeedbackDelayTau1','FeedbackDelayTau2','FeedbackDelayTau3','FeedbackDelayGrace','IncorrectChoiceFeedbackType','SkippedFeedbackFeedbackType'};
     %% OdorParams
     TaskParameters.GUI.OdorA_bank = 3;
     TaskParameters.GUI.OdorB_bank = 4;
@@ -286,7 +312,7 @@ BpodSystem.Data.Custom.OdorPair = ones(1,2)*2;
 BpodSystem.Data.Custom.ST = [];
 BpodSystem.Data.Custom.ResolutionTime = [];
 BpodSystem.Data.Custom.Rewarded = false(0);
-BpodSystem.Data.Custom.RewardMagnitude = TaskParameters.GUI.RewardAmount*[TaskParameters.GUI.BlockTable.RewL(1), TaskParameters.GUI.BlockTable.RewR(1)];
+BpodSystem.Data.Custom.RewardMagnitude=[];
 BpodSystem.Data.Custom.TrialNumber = [];
 BpodSystem.Data.Custom.LaserTrial = false;
 BpodSystem.Data.Custom.LaserTrialTrainStart = NaN;

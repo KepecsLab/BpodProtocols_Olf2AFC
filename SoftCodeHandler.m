@@ -33,18 +33,54 @@ end %if olfactory soft codes
 
 if softCode > 10 && softCode < 21 %for auditory clicks
     if ~BpodSystem.EmulatorMode
-        if softCode == 11 %noise on chan 1
+if softCode == 11 %noise on chan 1
+            tic
+            SendBpodSoftCode(5)
+            toc
             ProgramPulsePal(BpodSystem.Data.Custom.PulsePalParamFeedback);
+            toc
+            SendBpodSoftCode(6)
+            toc
             SendCustomPulseTrain(1,cumsum(randi(9,1,601))/10000,(rand(1,601)-.5)*20); % White(?) noise on channel 1+2
             SendCustomPulseTrain(2,cumsum(randi(9,1,601))/10000,(rand(1,601)-.5)*20);
             TriggerPulsePal(1,2);
-            ProgramPulsePal(BpodSystem.Data.Custom.PulsePalParamStimulus);
+            toc
+%            ProgramPulsePal(BpodSystem.Data.Custom.PulsePalParamStimulus);
         elseif softCode == 12 %beep on chan 2
             ProgramPulsePal(BpodSystem.Data.Custom.PulsePalParamFeedback);
+           % toc
             SendCustomPulseTrain(2,0:.001:.3,(ones(1,301)*3));  % Beep on channel 1+2
+           % toc
             SendCustomPulseTrain(1,0:.001:.3,(ones(1,301)*3));
+           % toc
             TriggerPulsePal(1,2);
-            ProgramPulsePal(BpodSystem.Data.Custom.PulsePalParamStimulus);            
+            
+        
+        elseif softCode == 15 %beep on chan 2
+            ProgramPulsePal(BpodSystem.Data.Custom.PulsePalParamFeedback);
+           % toc
+            SendCustomPulseTrain(2,0:.0004:.3,(ones(1,751)*3));  % Beep on channel 1+2
+           % toc
+            SendCustomPulseTrain(1,0:.0004:.3,(ones(1,751)*3));
+           % toc
+            TriggerPulsePal(1,2);
+         
+        elseif softCode == 14 %beep on chan 2
+            ProgramPulsePal(BpodSystem.Data.Custom.PulsePalParamFeedback);
+           % toc
+            SendCustomPulseTrain(2,0:.0006:.3,(ones(1,501)*3));  % Beep on channel 1+2
+           % toc
+            SendCustomPulseTrain(1,0:.0006:.3,(ones(1,501)*3));
+           % toc
+            TriggerPulsePal(1,2);         
+        elseif softCode == 13 %beep on chan 2
+            ProgramPulsePal(BpodSystem.Data.Custom.PulsePalParamFeedback);
+           % toc
+            SendCustomPulseTrain(2,0:.0009:.3,(ones(1,334)*3));  % Beep on channel 1+2
+           % toc
+            SendCustomPulseTrain(1,0:.0009:.3,(ones(1,334)*3));
+           % toc
+            TriggerPulsePal(1,2);  
         end
     end
 end

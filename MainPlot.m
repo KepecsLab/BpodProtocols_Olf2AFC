@@ -23,6 +23,12 @@ switch Action
         BpodSystem.GUIHandles.OutcomePlot.CurrentTrialCross = line(1,0, 'LineStyle','none','Marker','+','MarkerEdge','k','MarkerFace',[1 1 1], 'MarkerSize',6);
         BpodSystem.GUIHandles.OutcomePlot.CumRwd = text(1,1,'0mL','verticalalignment','bottom','horizontalalignment','center');
         BpodSystem.GUIHandles.OutcomePlot.Correct = line(-1,1, 'LineStyle','none','Marker','o','MarkerEdge','g','MarkerFace','g', 'MarkerSize',6);
+        
+        BpodSystem.GUIHandles.OutcomePlot.bL = line(-1,1, 'LineStyle','none','Marker','o','MarkerEdge','g','MarkerFace','g', 'MarkerSize',6);
+        BpodSystem.GUIHandles.OutcomePlot.bC = line(-1,1, 'LineStyle','none','Marker','o','MarkerEdge','g','MarkerFace','g', 'MarkerSize',10);
+        BpodSystem.GUIHandles.OutcomePlot.bR = line(-1,1, 'LineStyle','none','Marker','o','MarkerEdge','c','MarkerFace','c', 'MarkerSize',10);
+
+        
         BpodSystem.GUIHandles.OutcomePlot.Incorrect = line(-1,1, 'LineStyle','none','Marker','o','MarkerEdge','r','MarkerFace','r', 'MarkerSize',6);
         BpodSystem.GUIHandles.OutcomePlot.BrokeFix = line(-1,0, 'LineStyle','none','Marker','d','MarkerEdge','b','MarkerFace','none', 'MarkerSize',6);
         BpodSystem.GUIHandles.OutcomePlot.EarlyWithdrawal = line(-1,0, 'LineStyle','none','Marker','d','MarkerEdge','none','MarkerFace','b', 'MarkerSize',6);
@@ -161,18 +167,41 @@ switch Action
         %Plot past trial outcomes
         indxToPlot = mn:iTrial;
         %Cumulative Reward Amount
+        
+        if ~isempty(BpodSystem.Data.Custom.RewardMagnitude)
         R = BpodSystem.Data.Custom.RewardMagnitude;
-        ndxRwd = BpodSystem.Data.Custom.Rewarded;
-        C = zeros(size(R)); C(BpodSystem.Data.Custom.ChoiceLeft==1&ndxRwd,1) = 1; C(BpodSystem.Data.Custom.ChoiceLeft==0&ndxRwd,2) = 1;
-        R = R.*C;
         set(BpodSystem.GUIHandles.OutcomePlot.CumRwd, 'position', [iTrial+1 1], 'string', ...
-            [num2str(sum(R(:))/1000) ' mL']);
+            [num2str(sum(R(:))/1000) ' mL'])
         clear R C
+        
         %Plot Rewarded
         ndxCor = BpodSystem.Data.Custom.ChoiceCorrect(indxToPlot)==1;
         Xdata = indxToPlot(ndxCor);
         Ydata = BpodSystem.Data.Custom.DV(indxToPlot); Ydata = Ydata(ndxCor);
         set(BpodSystem.GUIHandles.OutcomePlot.Correct, 'xdata', Xdata, 'ydata', Ydata);
+        try
+        ndx_bL= BpodSystem.Data.Custom.FeedbackCheckpoint==1;
+        ndx_bM= BpodSystem.Data.Custom.FeedbackCheckpoint==2;
+        ndx_bR= BpodSystem.Data.Custom.FeedbackCheckpoint==3;
+        
+        Xdata = indxToPlot(ndxCor&ndx_bL);
+        Ydata = BpodSystem.Data.Custom.DV(indxToPlot); Ydata = Ydata(ndxCor&ndx_bL);
+        
+        set(BpodSystem.GUIHandles.OutcomePlot.bL, 'xdata', Xdata, 'ydata', Ydata);
+        
+        Xdata = indxToPlot(ndxCor&ndx_bM);
+        Ydata = BpodSystem.Data.Custom.DV(indxToPlot); Ydata = Ydata(ndxCor&ndx_bM);
+        
+        set(BpodSystem.GUIHandles.OutcomePlot.bC, 'xdata', Xdata, 'ydata', Ydata);
+        
+        Xdata = indxToPlot(ndxCor&ndx_bR);
+        Ydata = BpodSystem.Data.Custom.DV(indxToPlot); Ydata = Ydata(ndxCor&ndx_bR);
+        set(BpodSystem.GUIHandles.OutcomePlot.bR, 'xdata', Xdata, 'ydata', Ydata);
+        catch
+            disp('unable to plot LMR on outcome plot')
+        end
+       
+        
         %Plot Incorrect
         ndxInc = BpodSystem.Data.Custom.ChoiceCorrect(indxToPlot)==0;
         Xdata = indxToPlot(ndxInc);
@@ -202,6 +231,9 @@ switch Action
         Xdata = indxToPlot(ndxCatch&~ndxMiss);
         Ydata = BpodSystem.Data.Custom.DV(indxToPlot); Ydata = Ydata(ndxCatch&~ndxMiss);
         set(BpodSystem.GUIHandles.OutcomePlot.Catch, 'xdata', Xdata, 'ydata', Ydata);
+        
+        else
+        end
         %% Psyc Olf
         if TaskParameters.GUI.ShowPsycOlf
             OdorFracA = BpodSystem.Data.Custom.OdorFracA(1:numel(BpodSystem.Data.Custom.ChoiceLeft));
@@ -260,15 +292,13 @@ switch Action
         if TaskParameters.GUI.ShowPsycAud
             AudDV = BpodSystem.Data.Custom.DV(1:numel(BpodSystem.Data.Custom.ChoiceLeft));
             ndxAud = BpodSystem.Data.Custom.AuditoryTrial(1:numel(BpodSystem.Data.Custom.ChoiceLeft));
-            if isfield(BpodSystem.Data.Custom,'BlockNumber')
-                BlockNumber = BpodSystem.Data.Custom.BlockNumber;
-            else
-                BlockNumber = ones(size(BpodSystem.Data.Custom.ChoiceLeft));
-            end
+
+            BlockNumber = ones(size(BpodSystem.Data.Custom.ChoiceLeft));
+        
             setBlocks = reshape(unique(BlockNumber),1,[]);
             ndxNan = isnan(BpodSystem.Data.Custom.ChoiceLeft);
             for iBlock = setBlocks(end)
-                ndxBlock = BpodSystem.Data.Custom.BlockNumber(1:numel(BpodSystem.Data.Custom.ChoiceLeft)) == iBlock;
+                ndxBlock = ones(size(BpodSystem.Data.Custom.ChoiceLeft));
                 if any(ndxBlock)
                     AudBin = 8;
                     BinIdx = discretize(AudDV,linspace(-1,1,AudBin+1));

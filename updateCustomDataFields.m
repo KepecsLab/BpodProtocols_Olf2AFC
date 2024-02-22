@@ -15,6 +15,7 @@ BpodSystem.Data.Custom.ST(iTrial) = NaN;
 BpodSystem.Data.Custom.ResolutionTime(iTrial) = NaN;
 BpodSystem.Data.Custom.Rewarded(iTrial) = false;
 BpodSystem.Data.Custom.TrialNumber(iTrial) = iTrial;
+BpodSystem.Data.Custom.FeedbackCheckpoint(iTrial) = 0;
 
 %% Checking states and rewriting standard
 statesThisTrial = BpodSystem.Data.RawData.OriginalStateNamesByNumber{iTrial}(BpodSystem.Data.RawData.OriginalStateData{iTrial});
@@ -31,31 +32,23 @@ end
 if any(strcmp('wait_Sin',statesThisTrial))
     BpodSystem.Data.Custom.MT(end) = diff(BpodSystem.Data.RawEvents.Trial{end}.States.wait_Sin);
 end
-if any(strcmp('rewarded_Lin',statesThisTrial))
-    BpodSystem.Data.Custom.ChoiceLeft(iTrial) = 1;
-    BpodSystem.Data.Custom.ChoiceCorrect(iTrial) = 1;
-    FeedbackPortTimes = BpodSystem.Data.RawEvents.Trial{end}.States.rewarded_Lin;
-    BpodSystem.Data.Custom.FeedbackTime(iTrial) = FeedbackPortTimes(end,end)-FeedbackPortTimes(1,1);
-    BpodSystem.Data.Custom.ResolutionTime(iTrial)  = FeedbackPortTimes(end,end);
-elseif any(strcmp('rewarded_Rin',statesThisTrial))
-    BpodSystem.Data.Custom.ChoiceLeft(iTrial) = 0;
-    BpodSystem.Data.Custom.ChoiceCorrect(iTrial) = 1;
-    FeedbackPortTimes = BpodSystem.Data.RawEvents.Trial{end}.States.rewarded_Rin;
-    BpodSystem.Data.Custom.FeedbackTime(iTrial) = FeedbackPortTimes(end,end)-FeedbackPortTimes(1,1);
-    BpodSystem.Data.Custom.ResolutionTime(iTrial)  = FeedbackPortTimes(end,end);
-elseif any(strcmp('unrewarded_Lin',statesThisTrial))
-    BpodSystem.Data.Custom.ChoiceLeft(iTrial) = 1;
+
+
+if any(strncmp('unRewarded',statesThisTrial, 10))
     BpodSystem.Data.Custom.ChoiceCorrect(iTrial) = 0;
-    FeedbackPortTimes = BpodSystem.Data.RawEvents.Trial{end}.States.unrewarded_Lin;
-    BpodSystem.Data.Custom.FeedbackTime(iTrial) = FeedbackPortTimes(end,end)-FeedbackPortTimes(1,1);
-    BpodSystem.Data.Custom.ResolutionTime(iTrial)  = FeedbackPortTimes(end,end);
-elseif any(strcmp('unrewarded_Rin',statesThisTrial))
+elseif any(strncmp('Rewarded',statesThisTrial, 8))
+    BpodSystem.Data.Custom.ChoiceCorrect(iTrial) = 1;
+end
+
+if any(strcmp('start_Lin',statesThisTrial))
+    BpodSystem.Data.Custom.ChoiceTime(iTrial) = BpodSystem.Data.RawEvents.Trial{end}.States.start_Lin(1);
     BpodSystem.Data.Custom.ChoiceLeft(iTrial) = 0;
-    BpodSystem.Data.Custom.ChoiceCorrect(iTrial) = 0;
-    FeedbackPortTimes = BpodSystem.Data.RawEvents.Trial{end}.States.unrewarded_Rin;
-    BpodSystem.Data.Custom.FeedbackTime(iTrial) = FeedbackPortTimes(end,end)-FeedbackPortTimes(1,1);
-    BpodSystem.Data.Custom.ResolutionTime(iTrial)  = FeedbackPortTimes(end,end);
-elseif any(strcmp('broke_fixation',statesThisTrial))
+elseif any(strcmp('start_Rin',statesThisTrial))
+    BpodSystem.Data.Custom.ChoiceLeft(iTrial) = 1;
+    BpodSystem.Data.Custom.ChoiceTime(iTrial) = BpodSystem.Data.RawEvents.Trial{end}.States.start_Rin(1);
+end
+
+if any(strcmp('broke_fixation',statesThisTrial))
     BpodSystem.Data.Custom.FixBroke(iTrial) = true;
 elseif any(strcmp('early_withdrawal',statesThisTrial))
     BpodSystem.Data.Custom.EarlyWithdrawal(iTrial) = true;
@@ -66,32 +59,143 @@ end
 if any(strcmp('skipped_feedback',statesThisTrial))
     BpodSystem.Data.Custom.Feedback(iTrial) = false;
 end
-if any(strncmp('water_',statesThisTrial,6))
+if any(strcmp('water_S',statesThisTrial))
     BpodSystem.Data.Custom.Rewarded(iTrial) = true;
+    FeedbackPortTimes = BpodSystem.Data.RawEvents.Trial{end}.States.water_S;
+    BpodSystem.Data.Custom.ResolutionTime(iTrial)  = FeedbackPortTimes(end,end);
+    BpodSystem.Data.Custom.RewardMagnitude(iTrial) = TaskParameters.GUI.S_ra; 
 end
+if any(strcmp('water_M',statesThisTrial))
+    BpodSystem.Data.Custom.Rewarded(iTrial) = true;
+    FeedbackPortTimes = BpodSystem.Data.RawEvents.Trial{end}.States.water_M;
+    BpodSystem.Data.Custom.ResolutionTime(iTrial)  = FeedbackPortTimes(end,end);
+    BpodSystem.Data.Custom.RewardMagnitude(iTrial) = TaskParameters.GUI.M_ra; 
+end
+if any(strcmp('water_L',statesThisTrial))
+    BpodSystem.Data.Custom.Rewarded(iTrial) = true;
+    FeedbackPortTimes = BpodSystem.Data.RawEvents.Trial{end}.States.water_L;
+    BpodSystem.Data.Custom.ResolutionTime(iTrial)  = FeedbackPortTimes(end,end);
+    BpodSystem.Data.Custom.RewardMagnitude(iTrial) = TaskParameters.GUI.L_ra; 
+end
+
+if any(strcmp('Rewarded_Bin_Wait3',statesThisTrial))
+    FeedbackPortTimes = BpodSystem.Data.RawEvents.Trial{end}.States.Rewarded_Bin_Wait3;
+    BpodSystem.Data.Custom.FeedbackDelay(iTrial) = TaskParameters.GUI.FeedbackDelay1 + TaskParameters.GUI.FeedbackDelay2 + TaskParameters.GUI.FeedbackDelay3;
+    BpodSystem.Data.Custom.FeedbackTime(iTrial) =  FeedbackPortTimes(1);
+    BpodSystem.Data.Custom.WaitingTime(iTrial) =  FeedbackPortTimes(1) - BpodSystem.Data.Custom.ChoiceTime(iTrial);
+    BpodSystem.Data.Custom.FeedbackCheckpoint(iTrial) = 3;
+    BpodSystem.Data.Custom.ChoiceCorrect(iTrial) = 1;
+    
+elseif any(strcmp('Rewarded_Bin_Wait2',statesThisTrial))
+    FeedbackPortTimes = BpodSystem.Data.RawEvents.Trial{end}.States.Rewarded_Bin_Wait2;
+    BpodSystem.Data.Custom.FeedbackDelay(iTrial) = TaskParameters.GUI.FeedbackDelay1 + TaskParameters.GUI.FeedbackDelay2;
+    BpodSystem.Data.Custom.FeedbackTime(iTrial) =  FeedbackPortTimes(1);
+    BpodSystem.Data.Custom.WaitingTime(iTrial) =  FeedbackPortTimes(1) - BpodSystem.Data.Custom.ChoiceTime(iTrial);
+    BpodSystem.Data.Custom.FeedbackCheckpoint(iTrial) = 2;
+    BpodSystem.Data.Custom.ChoiceCorrect(iTrial) = 1;
+    
+elseif any(strcmp('Rewarded_Bin_Wait1',statesThisTrial))
+    FeedbackPortTimes = BpodSystem.Data.RawEvents.Trial{end}.States.Rewarded_Bin_Wait1;
+    BpodSystem.Data.Custom.FeedbackDelay(iTrial) = TaskParameters.GUI.FeedbackDelay1;
+    BpodSystem.Data.Custom.FeedbackTime(iTrial) =  FeedbackPortTimes(1);
+    BpodSystem.Data.Custom.WaitingTime(iTrial) =  FeedbackPortTimes(1) - BpodSystem.Data.Custom.ChoiceTime(iTrial);
+    BpodSystem.Data.Custom.FeedbackCheckpoint(iTrial) = 1;
+    BpodSystem.Data.Custom.ChoiceCorrect(iTrial) = 1;
+end
+if any(strcmp('unRewarded_Bin_Wait3',statesThisTrial))
+    FeedbackPortTimes = BpodSystem.Data.RawEvents.Trial{end}.States.unRewarded_Bin_Wait3;
+    BpodSystem.Data.Custom.FeedbackDelay(iTrial) =TaskParameters.GUI.FeedbackDelay1 + TaskParameters.GUI.FeedbackDelay2+ TaskParameters.GUI.FeedbackDelay3;
+    BpodSystem.Data.Custom.FeedbackTime(iTrial) =  FeedbackPortTimes(1);
+    BpodSystem.Data.Custom.WaitingTime(iTrial) =  FeedbackPortTimes(1) - BpodSystem.Data.Custom.ChoiceTime(iTrial);
+    BpodSystem.Data.Custom.FeedbackCheckpoint(iTrial) = 3;
+    BpodSystem.Data.Custom.ChoiceCorrect(iTrial) = 0;
+    BpodSystem.Data.Custom.RewardMagnitude(iTrial) = 0;  
+end
+if any(strcmp('unRewarded_Bin_Wait2',statesThisTrial))
+    FeedbackPortTimes = BpodSystem.Data.RawEvents.Trial{end}.States.unRewarded_Bin_Wait2;
+    BpodSystem.Data.Custom.FeedbackDelay(iTrial) =TaskParameters.GUI.FeedbackDelay1 + TaskParameters.GUI.FeedbackDelay2;
+    BpodSystem.Data.Custom.FeedbackTime(iTrial) =  FeedbackPortTimes(1);
+    BpodSystem.Data.Custom.WaitingTime(iTrial) =  FeedbackPortTimes(1) - BpodSystem.Data.Custom.ChoiceTime(iTrial);
+    BpodSystem.Data.Custom.FeedbackCheckpoint(iTrial) = 2;
+    BpodSystem.Data.Custom.ChoiceCorrect(iTrial) = 0;
+    BpodSystem.Data.Custom.RewardMagnitude(iTrial) = 0;  
+end
+
+if any(strcmp('unRewarded_Bin_Wait1',statesThisTrial))
+    FeedbackPortTimes = BpodSystem.Data.RawEvents.Trial{end}.States.unRewarded_Bin_Wait1;
+    BpodSystem.Data.Custom.FeedbackDelay(iTrial) = TaskParameters.GUI.FeedbackDelay1;
+    BpodSystem.Data.Custom.FeedbackTime(iTrial) =  FeedbackPortTimes(1);
+    BpodSystem.Data.Custom.WaitingTime(iTrial) =  FeedbackPortTimes(1) - BpodSystem.Data.Custom.ChoiceTime(iTrial);
+    BpodSystem.Data.Custom.FeedbackCheckpoint(iTrial) = 1;
+    BpodSystem.Data.Custom.ChoiceCorrect(iTrial) = 0;
+    BpodSystem.Data.Custom.RewardMagnitude(iTrial) = 0;  
+end
+
+
+% if any(strcmp('rewarded_Lin',statesThisTrial))
+%     BpodSystem.Data.Custom.ChoiceLeft(iTrial) = 1;
+%     BpodSystem.Data.Custom.ChoiceCorrect(iTrial) = 1;
+%     FeedbackPortTimes = BpodSystem.Data.RawEvents.Trial{end}.States.rewarded_Lin;
+%     BpodSystem.Data.Custom.FeedbackTime(iTrial) = FeedbackPortTimes(end,end)-FeedbackPortTimes(1,1);
+%     BpodSystem.Data.Custom.ResolutionTime(iTrial)  = FeedbackPortTimes(end,end);
+% elseif any(strcmp('rewarded_Rin',statesThisTrial))
+%     BpodSystem.Data.Custom.ChoiceLeft(iTrial) = 0;
+%     BpodSystem.Data.Custom.ChoiceCorrect(iTrial) = 1;
+%     FeedbackPortTimes = BpodSystem.Data.RawEvents.Trial{end}.States.rewarded_Rin;
+%     BpodSystem.Data.Custom.FeedbackTime(iTrial) = FeedbackPortTimes(end,end)-FeedbackPortTimes(1,1);
+%     BpodSystem.Data.Custom.ResolutionTime(iTrial)  = FeedbackPortTimes(end,end);
+% elseif any(strcmp('unrewarded_Lin',statesThisTrial))
+%     BpodSystem.Data.Custom.ChoiceLeft(iTrial) = 1;
+%     BpodSystem.Data.Custom.ChoiceCorrect(iTrial) = 0;
+%     FeedbackPortTimes = BpodSystem.Data.RawEvents.Trial{end}.States.unrewarded_Lin;
+%     BpodSystem.Data.Custom.FeedbackTime(iTrial) = FeedbackPortTimes(end,end)-FeedbackPortTimes(1,1);
+%     BpodSystem.Data.Custom.ResolutionTime(iTrial)  = FeedbackPortTimes(end,end);
+% elseif any(strcmp('unrewarded_Rin',statesThisTrial))
+%     BpodSystem.Data.Custom.ChoiceLeft(iTrial) = 0;
+%     BpodSystem.Data.Custom.ChoiceCorrect(iTrial) = 0;
+%     FeedbackPortTimes = BpodSystem.Data.RawEvents.Trial{end}.States.unrewarded_Rin;
+%     BpodSystem.Data.Custom.FeedbackTime(iTrial) = FeedbackPortTimes(end,end)-FeedbackPortTimes(1,1);
+%     BpodSystem.Data.Custom.ResolutionTime(iTrial)  = FeedbackPortTimes(end,end);
+% elseif any(strcmp('broke_fixation',statesThisTrial))
+%     BpodSystem.Data.Custom.FixBroke(iTrial) = true;
+% elseif any(strcmp('early_withdrawal',statesThisTrial))
+%     BpodSystem.Data.Custom.EarlyWithdrawal(iTrial) = true;
+% end
+% if any(strcmp('missed_choice',statesThisTrial))
+%     BpodSystem.Data.Custom.Feedback(iTrial) = false;
+% end
+% if any(strcmp('skipped_feedback',statesThisTrial))
+%     BpodSystem.Data.Custom.Feedback(iTrial) = false;
+% end
+% if any(strncmp('water_',statesThisTrial,6))
+%     BpodSystem.Data.Custom.Rewarded(iTrial) = true;
+% end
 
 %% State-independent fields
 BpodSystem.Data.Custom.StimDelay(iTrial) = TaskParameters.GUI.StimDelay;
-BpodSystem.Data.Custom.FeedbackDelay(iTrial) = TaskParameters.GUI.FeedbackDelay;
+BpodSystem.Data.Custom.FeedbackDelay1(iTrial) = TaskParameters.GUI.FeedbackDelay1;
+BpodSystem.Data.Custom.FeedbackDelay2(iTrial) = TaskParameters.GUI.FeedbackDelay2;
+BpodSystem.Data.Custom.FeedbackDelay3(iTrial) = TaskParameters.GUI.FeedbackDelay3;
+
 BpodSystem.Data.Custom.MinSampleAud(iTrial) = TaskParameters.GUI.MinSampleAud;
 
-if BpodSystem.Data.Custom.BlockNumber(iTrial) < max(TaskParameters.GUI.BlockTable.BlockNumber) % Not final block
-    if BpodSystem.Data.Custom.BlockTrial(iTrial) >= TaskParameters.GUI.BlockTable.BlockLen(TaskParameters.GUI.BlockTable.BlockNumber...
-            ==BpodSystem.Data.Custom.BlockNumber(iTrial)) % Block transition
-        BpodSystem.Data.Custom.BlockNumber(iTrial+1) = BpodSystem.Data.Custom.BlockNumber(iTrial) + 1;
-        BpodSystem.Data.Custom.BlockTrial(iTrial+1) = 1;
-    else
-        BpodSystem.Data.Custom.BlockNumber(iTrial+1) = BpodSystem.Data.Custom.BlockNumber(iTrial);
-        BpodSystem.Data.Custom.BlockTrial(iTrial+1) = BpodSystem.Data.Custom.BlockTrial(iTrial) + 1;
-    end
-else % Final block
-    BpodSystem.Data.Custom.BlockTrial(iTrial+1) = BpodSystem.Data.Custom.BlockTrial(iTrial) + 1;
-    BpodSystem.Data.Custom.BlockNumber(iTrial+1) = BpodSystem.Data.Custom.BlockNumber(iTrial);
-end
-
-BpodSystem.Data.Custom.RewardMagnitude(iTrial+1,:) = TaskParameters.GUI.RewardAmount*...
-    [TaskParameters.GUI.BlockTable.RewL(TaskParameters.GUI.BlockTable.BlockNumber==BpodSystem.Data.Custom.BlockNumber(iTrial+1)),...
-    TaskParameters.GUI.BlockTable.RewR(TaskParameters.GUI.BlockTable.BlockNumber==BpodSystem.Data.Custom.BlockNumber(iTrial+1))];
+% if BpodSystem.Data.Custom.BlockNumber(iTrial) < max(TaskParameters.GUI.BlockTable.BlockNumber) % Not final block
+%     if BpodSystem.Data.Custom.BlockTrial(iTrial) >= TaskParameters.GUI.BlockTable.BlockLen(TaskParameters.GUI.BlockTable.BlockNumber...
+%             ==BpodSystem.Data.Custom.BlockNumber(iTrial)) % Block transition
+%         BpodSystem.Data.Custom.BlockNumber(iTrial+1) = BpodSystem.Data.Custom.BlockNumber(iTrial) + 1;
+%         BpodSystem.Data.Custom.BlockTrial(iTrial+1) = 1;
+%     else
+%         BpodSystem.Data.Custom.BlockNumber(iTrial+1) = BpodSystem.Data.Custom.BlockNumber(iTrial);
+%         BpodSystem.Data.Custom.BlockTrial(iTrial+1) = BpodSystem.Data.Custom.BlockTrial(iTrial) + 1;
+%     end
+% else % Final block
+%     BpodSystem.Data.Custom.BlockTrial(iTrial+1) = BpodSystem.Data.Custom.BlockTrial(iTrial) + 1;
+%     BpodSystem.Data.Custom.BlockNumber(iTrial+1) = BpodSystem.Data.Custom.BlockNumber(iTrial);
+% end
+% 
+% BpodSystem.Data.Custom.RewardMagnitude(iTrial+1,:) = TaskParameters.GUI.RewardAmount*...
+%     [TaskParameters.GUI.BlockTable.RewL(TaskParameters.GUI.BlockTable.BlockNumber==BpodSystem.Data.Custom.BlockNumber(iTrial+1)),...
+%     TaskParameters.GUI.BlockTable.RewR(TaskParameters.GUI.BlockTable.BlockNumber==BpodSystem.Data.Custom.BlockNumber(iTrial+1))];
 
 %% Updating Delays
 %stimulus delay
@@ -151,24 +255,65 @@ else
 end
 
 %feedback delay
-switch TaskParameters.GUIMeta.FeedbackDelaySelection.String{TaskParameters.GUI.FeedbackDelaySelection}
-    case 'AutoIncr'
-        if ~BpodSystem.Data.Custom.Feedback(iTrial)
-            TaskParameters.GUI.FeedbackDelay = max(TaskParameters.GUI.FeedbackDelayMin,...
-                min(TaskParameters.GUI.FeedbackDelayMax,BpodSystem.Data.Custom.FeedbackDelay(iTrial)-TaskParameters.GUI.FeedbackDelayDecr));
-        else
-            TaskParameters.GUI.FeedbackDelay = min(TaskParameters.GUI.FeedbackDelayMax,...
-                max(TaskParameters.GUI.FeedbackDelayMin,BpodSystem.Data.Custom.FeedbackDelay(iTrial)+TaskParameters.GUI.FeedbackDelayIncr));
-        end
-    case 'TruncExp'
-        TaskParameters.GUI.FeedbackDelay = TruncatedExponential(TaskParameters.GUI.FeedbackDelayMin,...
-            TaskParameters.GUI.FeedbackDelayMax,TaskParameters.GUI.FeedbackDelayTau);
-    case 'Fix'
-        %     ATTEMPT TO GRAY OUT FIELDS
-        %     if ~strcmp('edit',TaskParameters.GUIMeta.FeedbackDelay.Style)
-        %         TaskParameters.GUIMeta.FeedbackDelay.Style = 'edit';
-        %     end
-        TaskParameters.GUI.FeedbackDelay = TaskParameters.GUI.FeedbackDelayMax;
+try
+    switch TaskParameters.GUIMeta.FeedbackDelaySelection.String{TaskParameters.GUI.FeedbackDelaySelection}
+
+
+        case 'AutoIncr'
+            
+            if BpodSystem.Data.Custom.FeedbackCheckpoint(iTrial)~=0 
+            TaskParameters.GUI.FeedbackDelay1min = TaskParameters.GUI.FeedbackDelay1min + TaskParameters.GUI.FeedbackDelayIncr;
+            TaskParameters.GUI.FeedbackDelay2min = TaskParameters.GUI.FeedbackDelay2min + TaskParameters.GUI.FeedbackDelayIncr;
+            TaskParameters.GUI.FeedbackDelay3min = TaskParameters.GUI.FeedbackDelay3min + TaskParameters.GUI.FeedbackDelayIncr;
+            
+            TaskParameters.GUI.FeedbackDelay1max = TaskParameters.GUI.FeedbackDelay1max + TaskParameters.GUI.FeedbackDelayIncr;
+            TaskParameters.GUI.FeedbackDelay2max = TaskParameters.GUI.FeedbackDelay2max + TaskParameters.GUI.FeedbackDelayIncr;
+            TaskParameters.GUI.FeedbackDelay3max = TaskParameters.GUI.FeedbackDelay3max + TaskParameters.GUI.FeedbackDelayIncr;
+            elseif ~isnan(BpodSystem.Data.Custom.ChoiceLeft)
+            TaskParameters.GUI.FeedbackDelay1min = TaskParameters.GUI.FeedbackDelay1min - TaskParameters.GUI.FeedbackDelayIncr;
+            TaskParameters.GUI.FeedbackDelay2min = TaskParameters.GUI.FeedbackDelay2min - TaskParameters.GUI.FeedbackDelayIncr;
+            TaskParameters.GUI.FeedbackDelay3min = TaskParameters.GUI.FeedbackDelay3min - TaskParameters.GUI.FeedbackDelayIncr;
+           
+            TaskParameters.GUI.FeedbackDelay1max = TaskParameters.GUI.FeedbackDelay1max - TaskParameters.GUI.FeedbackDelayDecr;
+            TaskParameters.GUI.FeedbackDelay2max = TaskParameters.GUI.FeedbackDelay2max - TaskParameters.GUI.FeedbackDelayDecr;
+            TaskParameters.GUI.FeedbackDelay3max = TaskParameters.GUI.FeedbackDelay3max - TaskParameters.GUI.FeedbackDelayDecr;
+            else
+            
+            TaskParameters.GUI.FeedbackDelay1 = TaskParameters.GUI.FeedbackDelay1min+rand(1)*(TaskParameters.GUI.FeedbackDelay1max-TaskParameters.GUI.FeedbackDelay1min);
+            
+            TaskParameters.GUI.FeedbackDelay2 = TaskParameters.GUI.FeedbackDelay2min+rand(1)*(TaskParameters.GUI.FeedbackDelay2max-TaskParameters.GUI.FeedbackDelay2min);
+            TaskParameters.GUI.FeedbackDelay3 = TaskParameters.GUI.FeedbackDelay3min+rand(1)*(TaskParameters.GUI.FeedbackDelay3max-TaskParameters.GUI.FeedbackDelay3min);
+            
+            end
+                
+
+            
+%             if ~BpodSystem.Data.Custom.Feedback(iTrial)
+%                 TaskParameters.GUI.FeedbackDelay = max(TaskParameters.GUI.FeedbackDelayMin,...
+%                     min(TaskParameters.GUI.FeedbackDelayMax,BpodSystem.Data.Custom.FeedbackDelay(iTrial)-TaskParameters.GUI.FeedbackDelayDecr));
+%             else
+%                 TaskParameters.GUI.FeedbackDelay = min(TaskParameters.GUI.FeedbackDelayMax,...
+%                     max(TaskParameters.GUI.FeedbackDelayMin,BpodSystem.Data.Custom.FeedbackDelay(iTrial)+TaskParameters.GUI.FeedbackDelayIncr));
+%             end
+        case 'TruncExp'
+            TaskParameters.GUI.FeedbackDelay1 = TruncatedExponential(TaskParameters.GUI.FeedbackDelay1Min,...
+                TaskParameters.GUI.FeedbackDelay1Max,TaskParameters.GUI.FeedbackDelay1Tau);
+            
+            TaskParameters.GUI.FeedbackDelay2 = TruncatedExponential(TaskParameters.GUI.FeedbackDelay2Min,...
+                TaskParameters.GUI.FeedbackDelay2Max,TaskParameters.GUI.FeedbackDelay2Tau);
+            
+            TaskParameters.GUI.FeedbackDelay3 = TruncatedExponential(TaskParameters.GUI.FeedbackDelay3Min,...
+                TaskParameters.GUI.FeedbackDelay3Max,TaskParameters.GUI.FeedbackDelay3Tau);
+        case 'Fix'
+            %     ATTEMPT TO GRAY OUT FIELDS
+            %     if ~strcmp('edit',TaskParameters.GUIMeta.FeedbackDelay.Style)
+            %         TaskParameters.GUIMeta.FeedbackDelay.Style = 'edit';
+            %     end
+            %TaskParameters.GUI.FeedbackDelay = TaskParameters.GUI.FeedbackDelay;
+
+    end
+
+catch
 end
 
 %% Drawing future trials
